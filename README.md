@@ -77,7 +77,7 @@ These parameters will be extracted from DICOM metadata as a JSON file in `output
 | Table Feed Per Rotation     | 23.0                   |                |
 | Rescale Intercept           | -1024.0                |                |
 | Rescale Slope               | 1.0                    |                |
-| Rescale Type                | "HU"                   |                |
+| Rescale Type                | HU                     |                |
 | Spiral Pitch Factor         | 0.6                    | for helical CT |
 
 Refer to the source code to find the corresponding (Group, Element) pair.
