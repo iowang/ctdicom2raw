@@ -84,12 +84,20 @@ Refer to the source code to find the corresponding (Group, Element) pair.
 
 ### RAW File Format
 
-- Pixel Value Type: 16-bit Unsigned
+- Pixel Value Type: 16-bit Unsigned (See the following for how to convert)
 - Width, Height: same as Rows, Columns
 - Byte Order: Little-endian
-- Pixel Value Meaning: Detector received value before rescaling to HU using *kx+b*
+- Pixel Value Meaning: Detector received value (mu value) before rescaling to HU using Rescale* parameters
 
 A proper WW/WL should be set to get a similar view like DICOM file.
+
+### What if I need a 32-bit image?
+
+Use this function provided to pad every pixel to target byte length:
+
+```python
+convertToNBytes(inPath, sourceBytes, outPath, targetBytes=4, littleEndian=True)
+```
 
 ## Third-party Libraries
 

@@ -1,7 +1,7 @@
 import setuptools
 
 setuptools.setup(name="ctdicom2raw",
-                 version="1.0",
+                 version="1.1",
                  author="z0gSh1u",
                  author_email="zx.cs@qq.coom",
                  description="Convert CT DICOM to RAW File with CT Parameters Output",
