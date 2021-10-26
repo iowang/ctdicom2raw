@@ -1,7 +1,13 @@
+# ctdicom2raw
+# Convert CT DICOM to RAW File with CT Parameters Output
+# https://github.com/z0gSh1u/ctdicom2raw
+# by z0gSh1u
+
 import pydicom
 import os
 from os import path
 import json
+from tqdm import tqdm
 
 
 def _CTPARAM(loc, type_):
@@ -56,9 +62,6 @@ CTPARAMS = {
     'Spiral Pitch Factor': _CTPARAM([0x0018, 0x9311], float)
 }
 
-ExampleDcmFile = 'F:/MedRecon/AAPM-CT-Dataset/AAPM-Reconstructed/L067/' + \
-    'L067_FD_1_1.CT.0001.0001.2015.12.22.18.09.40.840353.358074219.IMA'
-
 
 def fetchCTParams(dicom):
     res = {}
@@ -72,48 +75,37 @@ def fetchCTParams(dicom):
 
     for key in CTPARAMS.keys():
         res[key] = _fetchCTParam(key)
+
+    assert res['Bits Allocated'] == 16, 'ctdicom2raw cannot deal with not 16-bit images now.'
+
     return res
 
 
-def dumpCTParams(dicom, path_):
-    json.dump(fetchCTParams(dicom), path_, indent=2)
+def dumpCTParams(dicom, folder, filename):
+    with open(path.join(folder, filename), 'w') as fp:
+        json.dump(fetchCTParams(dicom), fp, indent=2)
 
 
-DEFAULT_REANME_FUNC = lambda x: '.'.join(x.split('.')[:-1])
+DEFAULT_REANME_FUNC = lambda x: '.'.join(x.split('.')[:-1]) + '.raw'
 
 
-def ctdicom2raw(dicomFolder, outputFolder, renameFunc=DEFAULT_REANME_FUNC, outputParam='first'):
+def ctdicom2raw(dicomFolder, outputFolder, renameFunc=DEFAULT_REANME_FUNC, outputParam='first', verbose=False):
     dicomFiles = sorted(os.listdir(dicomFolder))
     dicomPaths = [path.join(dicomFolder, x) for x in dicomFiles]
-    for idx, dicomPath in enumerate(dicomPaths):
+    enums = tqdm(dicomPaths) if verbose else dicomPaths
+    for idx, dicomPath in enumerate(enums):
         dcm = pydicom.dcmread(dicomPath)
         outputName = renameFunc(dicomFiles[idx])
         # output CT parameters
         if outputParam == 'every':
-            paramOutputPath = path.join(outputFolder, outputName + '.param.json')
-            json.dump(fetchCTParams(dcm), paramOutputPath, indent=2)
+            dumpCTParams(dcm, outputFolder, outputName + '.param.json')
         # convert pixel data bytes to raw file
-        rawOutputPath = path.join(outputFolder, outputName + '.raw')
+        rawOutputPath = path.join(outputFolder, outputName)
         f = open(rawOutputPath, mode='wb')
         f.write(dcm.PixelData)
         f.close()
     if outputParam == 'first':
-        dcm = pydicom.dcmread(dicomPath)
-        outputName = renameFunc(dicomFiles[0])
+        dcm = pydicom.dcmread(dicomPaths[0])
         # output CT parameters
-        dumpCTParams(dcm)
-        paramOutputPath = path.join(outputFolder, outputName + '.param.json')
-        json.dump(fetchCTParams(dcm), paramOutputPath, indent=2)
-
-
-def _ctdicom2raw(dcmPath, rawOutputPath):
-    dcm = pydicom.dcmread(ExampleDcmFile)
-    # print(dcm[0x0028, 0x1050].value)
-    print(fetchCTParams(dcm))
-    # bytes_ = dcm.PixelData
-    # f = open(rawOutputPath, mode='wb')
-    # f.write(bytes_)
-    # f.close()
-
-
-_ctdicom2raw(None, None)
+        dumpCTParams(dcm, outputFolder, 'parameter.param.json')
+    print("Conversion done!")
